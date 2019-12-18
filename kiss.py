@@ -8,6 +8,10 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 
+__version__ = '0.1.1'
+__author__ = "Elkasitu"
+
+
 def bootstrap():
     try:
         # TODO: dbname and user as settings? for security
@@ -28,7 +32,7 @@ def create_tables(conn):
     except psycopg2.errors.UndefinedTable:
         conn.rollback()
     # TODO: move this to a base.sql that gets imported automatically
-    cr.execute("CREATE TABLE videos (id serial PRIMARY KEY, name varchar, time integer DEFAULT 0);")
+    cr.execute("CREATE TABLE videos (id serial PRIMARY KEY, name varchar, time float DEFAULT 0.0);")
     conn.commit()
 
 
@@ -40,7 +44,7 @@ def add():
     cr = conn.cursor()
     cr.execute("INSERT INTO videos (name) VALUES (%s)", (name,))
     conn.commit()
-    return "Added!"
+    return jsonify({'res': 'ok'})
 
 
 @app.route('/remove', methods=['POST'])
@@ -50,7 +54,7 @@ def remove():
     cr = conn.cursor()
     cr.execute("DELETE FROM videos WHERE name=%s", (name,))
     conn.commit()
-    return "Removed!"
+    return jsonify({'res': 'ok'})
 
 
 @app.route('/update', methods=['POST'])
@@ -61,7 +65,7 @@ def update():
     cr = conn.cursor()
     cr.execute("UPDATE videos SET time=%s WHERE name=%s", (time, name,))
     conn.commit()
-    return "Updated!"
+    return jsonify({'res': 'ok'})
 
 
 @app.route('/fetch/<string:name>')
@@ -69,7 +73,7 @@ def fetch(name):
     cr = conn.cursor()
     cr.execute("SELECT time FROM videos WHERE name=%s", (name,))
     time = cr.fetchone()
-    return jsonify({'time': time or False})
+    return jsonify({'time': time and time[0]})
 
 
 if __name__ == '__main__':
